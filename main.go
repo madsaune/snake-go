@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	BOARD_W, BOARD_H int32 = 420, 240
-	BOARD_SCALE      int32 = 8
+	WIN_W, WIN_H int32 = 420, 240
+	BOARD_SCALE  int32 = 10
 )
 
 var (
@@ -41,8 +41,8 @@ func run() (err error) {
 		"Snake-GO",
 		sdl.WINDOWPOS_CENTERED,
 		sdl.WINDOWPOS_CENTERED,
-		BOARD_W,
-		BOARD_H,
+		WIN_W,
+		WIN_H,
 		sdl.WINDOW_SHOWN,
 	)
 	if err != nil {
@@ -59,8 +59,9 @@ func run() (err error) {
 	// TODO: Need label for points
 	// TODO: Need label for highscore
 
-	snake := NewSnake()
-	fruit := NewFruit(BOARD_W, BOARD_H, BOARD_SCALE)
+	board := NewBoard(int(WIN_W-20), int(WIN_H-30), 10, 20, int(BOARD_SCALE))
+	snake := NewSnake(board)
+	fruit := NewFruit(board)
 
 	// Game Loop
 	running := true
@@ -142,6 +143,7 @@ func run() (err error) {
 		renderer.SetDrawColor(0, 0, 0, 255)
 		renderer.Clear()
 
+		board.Draw(renderer)
 		snake.Draw(renderer)
 		fruit.Draw(renderer)
 

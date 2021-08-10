@@ -1,18 +1,22 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/veandco/go-sdl2/sdl"
 )
 
 type snake struct {
+	board     *board
 	body      []point
 	direction point
 	points    int
 	color     color
 }
 
-func NewSnake() *snake {
+func NewSnake(b *board) *snake {
 	return &snake{
+		board: b,
 		body: []point{
 			{x: 10, y: 10},
 			{x: 9, y: 10},
@@ -26,27 +30,32 @@ func NewSnake() *snake {
 
 func (s *snake) Update() {
 	if len(s.body) > 1 {
-		// Remove last element of s.Body and assign to tail. (pop)
-		var tail point
-		tail, s.body = s.body[len(s.body)-1], s.body[:len(s.body)-1]
 
-		// Set coordinates of tail based on current direction
-		if s.direction.x == 1 {
-			tail.x = s.body[0].x + 1
-			tail.y = s.body[0].y
-		} else if s.direction.y == 1 {
-			tail.x = s.body[0].x
-			tail.y = s.body[0].y + 1
-		} else if s.direction.x == -1 {
-			tail.x = s.body[0].x - 1
-			tail.y = s.body[0].y
-		} else if s.direction.y == -1 {
-			tail.x = s.body[0].x
-			tail.y = s.body[0].y - 1
+		if s.direction.x != 0 || s.direction.y != 0 {
+			// Remove last element of s.Body and assign to tail. (pop)
+			var tail point
+			tail, s.body = s.body[len(s.body)-1], s.body[:len(s.body)-1]
+
+			// Set coordinates of tail based on current direction
+			if s.direction.x == 1 {
+				tail.x = s.body[0].x + 1
+				tail.y = s.body[0].y
+			} else if s.direction.y == 1 {
+				tail.x = s.body[0].x
+				tail.y = s.body[0].y + 1
+			} else if s.direction.x == -1 {
+				tail.x = s.body[0].x - 1
+				tail.y = s.body[0].y
+			} else if s.direction.y == -1 {
+				tail.x = s.body[0].x
+				tail.y = s.body[0].y - 1
+			}
+
+			// Insert tail as the first element in s.Body (unshift)
+			s.body = append([]point{tail}, s.body...)
+
+			fmt.Printf("Body pos: %v\n", s.body[0])
 		}
-
-		// Insert tail as the first element in s.Body (unshift)
-		s.body = append([]point{tail}, s.body...)
 	} else {
 		s.body[0] = point{
 			x: s.direction.x,
@@ -106,6 +115,9 @@ func (s *snake) Eat(f *fruit) {
 
 	// If snake head is on the same position as fruit
 	if s.body[0].x == f.pos.x && s.body[0].y == f.pos.y {
+
+		fmt.Println("Fruit match Snake pos")
+
 		var new_x int32
 		var new_y int32
 
@@ -136,10 +148,16 @@ func (s *snake) Eat(f *fruit) {
 }
 
 func (s *snake) DetectCollision() bool {
-	if s.body[0].x >= BOARD_W/BOARD_SCALE ||
-		s.body[0].x < 0 ||
-		s.body[0].y >= BOARD_H/BOARD_SCALE ||
-		s.body[0].y < 0 {
+
+	min_x := s.board.x / s.board.scale
+	max_x := (s.board.w + s.board.x) / s.board.scale
+	min_y := s.board.y / s.board.scale
+	max_y := (s.board.h + s.board.y) / s.board.scale
+
+	if s.body[0].x >= int32(max_x) ||
+		s.body[0].x < int32(min_x) ||
+		s.body[0].y >= int32(max_y) ||
+		s.body[0].y < int32(min_y) {
 		return true
 	}
 
@@ -151,10 +169,10 @@ func (s *snake) Draw(r *sdl.Renderer) {
 
 	for _, v := range s.body {
 		rects = append(rects, sdl.Rect{
-			X: v.x * BOARD_SCALE,
-			Y: v.y * BOARD_SCALE,
-			W: BOARD_SCALE,
-			H: BOARD_SCALE,
+			X: v.x * int32(s.board.scale),
+			Y: v.y * int32(s.board.scale),
+			W: int32(s.board.scale),
+			H: int32(s.board.scale),
 		})
 
 	}
