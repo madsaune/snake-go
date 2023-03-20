@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
+	"github.com/veandco/go-sdl2/ttf"
 )
 
 const (
@@ -31,6 +32,12 @@ func run() (err error) {
 
 	var window *sdl.Window
 	var renderer *sdl.Renderer
+	var font *ttf.Font
+
+	if err = ttf.Init(); err != nil {
+		return err
+	}
+	defer ttf.Quit()
 
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		return err
@@ -50,6 +57,11 @@ func run() (err error) {
 	}
 	defer window.Destroy()
 
+	if font, err = ttf.OpenFont("/Users/mm/Library/Fonts/CascadiaMono.ttf", 14); err != nil {
+		return err
+	}
+	defer font.Close()
+
 	renderer, err = sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED)
 	if err != nil {
 		return err
@@ -59,7 +71,7 @@ func run() (err error) {
 	// TODO: Need label for points
 	// TODO: Need label for highscore
 
-	board := NewBoard(int(WIN_W-20), int(WIN_H-30), 10, 20, int(BOARD_SCALE))
+	board := NewBoard(int(WIN_W-20), int(WIN_H-40), 10, 30, int(BOARD_SCALE))
 	snake := NewSnake(board)
 	fruit := NewFruit(board)
 
@@ -142,6 +154,22 @@ func run() (err error) {
 		// clear screen
 		renderer.SetDrawColor(0, 0, 0, 255)
 		renderer.Clear()
+
+		var scoreText *sdl.Surface
+		if scoreText, err = font.RenderUTF8Blended(fmt.Sprintf("Score: %d", snake.points), sdl.Color{R: 255, G: 255, B: 255, A: 255}); err != nil {
+			return err
+		}
+		defer scoreText.Free()
+
+		txt, err := renderer.CreateTextureFromSurface(scoreText)
+		if err != nil {
+			return err
+		}
+		defer txt.Destroy()
+
+		if err = renderer.Copy(txt, nil, &sdl.Rect{X: 10, Y: 7, W: scoreText.W, H: scoreText.H}); err != nil {
+			return err
+		}
 
 		board.Draw(renderer)
 		snake.Draw(renderer)
